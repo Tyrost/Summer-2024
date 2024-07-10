@@ -11,6 +11,8 @@ I have just started learning how to use APIs. This repository will serve as a co
 My first project is a simple API to understand the basics of making API requests and handling responses as json format using the Flask python library.
 I have also installed and started ;earning the Postman software for a better understanding.
 
+Credits : https://www.youtube.com/watch?v=zsYIw6RXjfM&t=643s
+
 # Future Plans #
 
 I plan to explore the following topics as I progress:
@@ -21,6 +23,4 @@ I plan to explore the following topics as I progress:
 - Error handling and debugging in API interactions
 - Building my own APIs
 
-# Contributing #
 
-If you have any suggestions, resources, or feedback that could help me on my learning journey, feel free to open an issue or submit a pull request.

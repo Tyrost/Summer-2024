@@ -68,7 +68,7 @@
     // echo verify($attempt, $hash);
 
     // $sql = "INSERT INTO users (username, password) #INSERT INTO {database name} (fields to insert; name, password, email, etc...) VALUES (values for each named field)
-    //         VALUES ('Sandra', 'yellow123')";
+    //         VALUES ('Daniel', 'yellow123')";
     
     // try {
     //     mysqli_query($conn, $sql);

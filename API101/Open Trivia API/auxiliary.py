@@ -1,4 +1,8 @@
 import requests
+from colorama import Fore, Style, init
+
+CHECK_MARK = '\033[32m\u2714\033[0m'  # Check mark
+CROSS_MARK = '\033[31m\u2716\033[0m'  # Cross mark
 
 def check_amount(amount):
     result = (isinstance(amount, str) or isinstance(amount, int))
@@ -26,6 +30,3 @@ def check_type(type):
     choices = ['any', 'multiple', 'boolean']
 
     return type in choices
-
-if __name__ == '__main__':
-    pass

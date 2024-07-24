@@ -1,38 +1,53 @@
 from auxiliary import *
+import logging  as log
 
-base_url = 'https://opentdb.com/api.php?'
+log.basicConfig(level=log.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+BASE_URL = 'https://opentdb.com/api.php?'
 
 def get_trivia(amount:int, category:int=None, diff:str=None, type:str=None):
     if not check_amount(amount):
-        print('Amount of questions must not exceed an amount of 50!')
-        return
+        log.error(f'\n\n\nLog: Question amount request not satisfied... OK {CROSS_MARK}\n')
+        raise ValueError('Amount of questions must not exceed 50')
     
-    url = f'{base_url}amount={str(amount)}'
+    log.info(f'\n\n\nLog: Question amount request satisfied... OK {CHECK_MARK}')
+    
+    url = f'{BASE_URL}amount={str(amount)}'
     try:
 
         if category is not None: 
             if check_category(category)[1]:
                 url += f'&category={category}'
+                log.info('Log: Category set... Condtions satisfied.')
             else:
-                print(f'Category {category} not supported')
+                log.warning(f'Category {category} not supported')
+        else:
+            log.info(f'Log: Category not set... Conditions satisfied. OK {CHECK_MARK}')
             
         if diff is not None:
             if check_diff(diff):
                 url += f'&difficulty={diff}'
+                log.info('Log: Difficulty set... Condtions satisfied.')
             else:
-                print(f'Difficulty {diff} not supported')
+                log.warning(f'Difficulty {diff} not supported')
+        else:
+            log.info(f'Log: Difficulty not set... Conditions satisfied. OK {CHECK_MARK}')
         
         if type is not None:
             if check_type(type):
                 url += f'&type={type}'
+                log.info('Log: Type set... Condtions satisfied.')
             else:
-                print('Type of gameplay not supported!')
+                log.warning('Type of gameplay not supported!')
+        else:
+            log.info(f'Log: Type not set... Conditions satisfied. OK {CHECK_MARK}')
         
         return url
     
     except Exception as error:
-        print(f'There was an error when getting trivia information. Error: {error}')
+        log.fatal(f'\n\n\nFatal error ocurred. The program may not continue.\n\n\n')
+        print(f'There was an error when getting trivia information. Error:\n {error}')
         return
     
 if __name__ =='__main__':
-    pass
+    print(get_trivia(20))

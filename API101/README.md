@@ -9,7 +9,7 @@ I have just started learning how to use APIs. This repository will serve as a co
 # 1. API_intro.py #
 
 My first project is a simple API to understand the basics of making API requests and handling responses as json format using the Flask python library.
-I have also installed and started ;earning the Postman software for a better understanding.
+I have also installed and started learning the Postman software for a better understanding.
 
 Credits : https://www.youtube.com/watch?v=zsYIw6RXjfM&t=643s
 

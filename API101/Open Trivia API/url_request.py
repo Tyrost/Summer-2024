@@ -6,6 +6,10 @@ log.basicConfig(level=log.DEBUG, format='%(asctime)s - %(levelname)s - %(message
 BASE_URL = 'https://opentdb.com/api.php?'
 
 def get_trivia(amount:int, category:int=None, diff:str=None, type:str=None):
+    '''
+    Initializes the http link to the API that will direct the program to the JSON containing trivia questions.
+    It logs the configurations of desired type of gameplay.
+    '''
     if not check_amount(amount):
         log.error(f'\n\n\nLog: Question amount request not satisfied... OK {CROSS_MARK}\n')
         raise ValueError('Amount of questions must not exceed 50')

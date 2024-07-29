@@ -1,57 +1,95 @@
 import pygame
-from assets.button import Button
+from assets.components import *
 from url_request import get_trivia, CROSS_MARK, CHECK_MARK
 import logging as log
 
-if __name__ == '__main__':
-    pygame.init()
-    pygame.font.init()
+def quit_command_ex(event):
+    
+    if quit_confirm_yes.isclicked(event):
+        log.info('Ending game...')
 
-    WWIDTH = 900
-    WHEIGHT = 600
-    FONT = pygame.font.Font('API101/Open Trivia API/assets/Lexend-Regular.ttf', 32)
+        return True
 
-    screen = pygame.display.set_mode((WWIDTH, WHEIGHT))
+    if quit_confirm_no.isclicked(event):
+        log.info('Action retracted, canceling quit...')
+        quit_confirm_yes.visible = False
+        quit_confirm_no.visible = False
+        main_start_btn.visible = True
+        main_quit_btn.visible = True
+
+        return False
+
+current_window = MAIN_MENU
+
+def main():
+
     pygame.display.set_caption('Trivia Game')
-
-    button = Button(WWIDTH/2 - 50, WHEIGHT/2 - 50, 150, 70, 'Hello World!', FONT, (0,0,0), (250, 250, 250), (100,100,100))
-
-    main_img_path = 'API101/Open Trivia API/assets/main_background.jpg'
     
     try:
-        main_img = pygame.image.load(main_img_path)
-        main_img = pygame.transform.scale(main_img, (WWIDTH, WHEIGHT))
         log.info(f'Main background image; Path: {main_img_path} loaded... OK {CHECK_MARK}')
-        
     except FileNotFoundError:
         log.error(f'Main background image; Path: {main_img_path} failed to load... {CROSS_MARK}')
-        main_img = None
     
+    quit_confirm_yes.visible = False
+    quit_confirm_no.visible = False
+
+    quit_flag = False
+
     running = True
     while running:
 
-        for event in pygame.event.get():
+    ### Terminate Game Event ###
+
+        for event in pygame.event.get(): # Event Manager (ESSENTIAL)
             if event.type == pygame.QUIT:
-                log.info('Game terminated.')
                 running = False
 
-###################################################
-        try:
-            if not main_img:
-                screen.fill((25, 80, 62))
-            else:
-                screen.blit(main_img, (0, 0))
-        except pygame.error:
-            log.warning('display Surface quit')
+    ### Main Image Filling ###
 
-###################################################
+        screen_fill(main_img)
 
-        button.draw(screen)
+    ### Main Button Events ###
 
-        if button.is_clicked(event):
-            log.info(f'BUTTON CLICKED! {CHECK_MARK}')
+        if current_window == MAIN_MENU:
 
-####################################################
-        pygame.display.update()
+            main_start_btn.draw(screen)
+            main_quit_btn.draw(screen)
+            
+            append_asset(main_start_btn, main_quit_btn)
+
+            if main_start_btn.isclicked(event): # Start Game Button
+                log.info(f'Start Button Clicked {CHECK_MARK}')
+                current_window = CONFIG_MENU
+
+                switch_window(1, master_asset_list)
+                
+
+            if main_quit_btn.isclicked(event): # Quit Game Event
+                log.info(f'Quit Button Clicked {CHECK_MARK}')
+
+                main_start_btn.undraw()
+                main_quit_btn.undraw()
+                del_asset([main_start_btn, main_quit_btn])
+
+                quit_confirm_yes.visible = True
+                quit_confirm_no.visible = True
+                append_asset([quit_confirm_yes, quit_confirm_no])
+
+                quit_flag = True
+            
+            # Draw buttons if attribute, visible = True, else return None and cotinue
+            quit_confirm_yes.draw(screen)
+            quit_confirm_no.draw(screen)
+            append_asset([quit_confirm_yes, quit_confirm_no])
+            
+            if quit_flag:
+                if quit_command_ex(event):
+                    running = False
+        elif current_window == CONFIG_MENU:
+            pass
+        elif current_window == GAME_MENU:
+            pass
+        pygame.display.update() # Update Changes
 
     pygame.quit()
+    log.info('Game terminated.')

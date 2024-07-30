@@ -20,7 +20,7 @@ Which we can modify manually to give us different questions as a form of a JSON 
 
 So, let's get started.
 
-###Log 1:
+### Log 1:
 
 To start, I will create three main modules:
 
@@ -38,7 +38,7 @@ Moving on to the `url_request.py` module was straight forward as I just needed t
 
 The main file remains empty as of now.
 
-###Log 2:
+### Log 2:
 
 Following this next update:
 
@@ -48,7 +48,7 @@ I continued to work with the Pygame library in the main module. It has taken me 
 
 Finally, I added the next a new file, `button.py` —also located within the assets folder— that will set the global font for the game, will create the button classes and functions intanciating these classes to be called in the main python file as a default function. This will now be my focus as it remains empty.
 
-###Log 3:
+### Log 3:
 
 There were lots of changes introduced. This section is what took the most time by far.
 

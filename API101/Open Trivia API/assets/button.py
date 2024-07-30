@@ -16,6 +16,9 @@ class Button:
         self.clicked = False
         self.visible = True
 
+    def undraw(self)->None:
+        self.visible = False
+
     def draw(self, screen:pygame.Surface) -> None:
         '''
         Draws the button box and checks for cursor events:
@@ -33,9 +36,6 @@ class Button:
         text_surface = self.font.render(self.text, True, self.fontColor)
         text_rect = text_surface.get_rect(center=self.box.center)
         screen.blit(text_surface, text_rect)
-
-    def undraw(self)->None:
-        self.visible = False
 
     def isclicked(self, event: pygame.event.Event) -> bool:
         '''

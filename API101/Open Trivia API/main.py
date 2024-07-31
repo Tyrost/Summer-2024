@@ -3,51 +3,34 @@ from assets.components import *
 from url_request import get_trivia, CROSS_MARK, CHECK_MARK
 import logging as log
 
-# def quit_command_ex(event):
-    
-#     if quit_confirm_yes.isclicked(event):
-#         log.info('Ending game...')
-
-#         return True
-
-#     if quit_confirm_no.isclicked(event):
-#         log.info('Action retracted, canceling...')
-#         quit_confirm_yes.visible = False
-#         quit_confirm_no.visible = False
-#         main_start_btn.visible = True
-#         main_quit_btn.visible = True
-
-#         return False
-
 current_window = MAIN_MENU
-
-
+window_assets = []
+quit_flag = False
+running = True
 
 def main():
     global current_window
     global master_asset_list
+    global running
+    global quit_flag
+
     start_time = time.time()
 
     pygame.display.set_caption('Trivia Game')
-    
-    try:
-        log.info(f'Main background image; Path: {main_img_path} loaded... OK {CHECK_MARK}')
-    except FileNotFoundError:
-        log.error(f'Main background image; Path: {main_img_path} failed to load... {CROSS_MARK}')
 
-    quit_flag = False
-
-    running = True
     while running:
 
-        # TIME TRACKER
+        current_img = get_current_image(current_window)
+
+    # TIME TRACKER
+    
         current_time = time.time()
         elapsed_time = current_time - start_time
 
-        if elapsed_time >= 1.0:
+        if elapsed_time >= 1.5:
             log.info(master_asset_list)
             start_time = current_time
-
+        
     ### Terminate Game Event ###
 
         for event in pygame.event.get(): # Event Manager (ESSENTIAL)
@@ -56,44 +39,13 @@ def main():
 
     ### Main Image Filling ###
 
-        screen_fill(main_img)
+        screen_fill(current_img)
 
     ### Main Button Events ###
 
         if current_window == MAIN_MENU:
-            
 
-            # Draw any possible usable buttons within the **main menu** window. Not all will be visible as some Button's
-            # visibility attributes are False
-            draw_many([main_start_btn, main_quit_btn, quit_confirm_yes, quit_confirm_no], screen)
-            # Start with visibility to quit confirmation buttons = False
-            # rest of buttons are visible by default.
-            make_invisible([quit_confirm_yes, quit_confirm_no])
-
-
-            
-            if main_start_btn.isclicked(event): # Start Game Button ### CONTINUE HERE
-                log.info(f'Start Button Clicked {CHECK_MARK}')
-                current_window = CONFIG_MENU
-
-                switch_window(1, master_asset_list) ### NOT IMPLEMENTED ###
-                
-
-            if main_quit_btn.isclicked(event): # Quit Game Event
-                log.info(f'Quit Button Clicked {CHECK_MARK}')
-
-                make_invisible([main_start_btn, main_quit_btn])
-                make_visible([quit_confirm_yes, quit_confirm_no])
-
-                quit_flag = True
-            
-            # Draw buttons if attribute, visible = True, else return None and cotinue
-
-            # append_asset([quit_confirm_yes, quit_confirm_no])
-            
-            if quit_flag:
-                if quit_command_ex(event):
-                    running = False
+            handle_main_menu(event)
 
         elif current_window == CONFIG_MENU:
             pass
@@ -104,4 +56,42 @@ def main():
     pygame.quit()
     log.info('Game terminated.')
 
-main()
+def handle_main_menu(event):
+    global running
+    global current_window
+    global quit_flag
+
+    window_assets = [main_start_btn, main_quit_btn, quit_confirm_yes, quit_confirm_no]
+    # Draw any possible usable buttons within the main menu window
+    draw_many(window_assets, screen)
+
+    # Start with visibility to quit confirmation buttons = False
+    if not quit_flag:
+        make_invisible([quit_confirm_yes, quit_confirm_no])
+
+    if main_start_btn.isclicked(event): # Start Game Button
+        log.info(f'Start Button Clicked {CHECK_MARK}')
+        current_window = CONFIG_MENU
+
+        switch_window(window_assets, CONFIG_MENU) ### WORK IN PROGRESS ###
+        
+    if main_quit_btn.isclicked(event): # Quit Game Event
+        log.info(f'Quit Button Clicked {CHECK_MARK}')
+
+        make_invisible([main_start_btn, main_quit_btn])
+        make_visible([quit_confirm_yes, quit_confirm_no])
+
+        quit_flag = True
+    
+    if quit_flag and quit_command_ex(event):
+        
+        running = False
+
+def hadle_config_window(event):
+    pass
+
+def handle_game_window(event):
+    pass
+
+if __name__ == '__main__':
+    main()

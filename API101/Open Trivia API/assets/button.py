@@ -15,6 +15,9 @@ class Button:
 
         self.clicked = False
         self.visible = True
+    
+    def __repr__(self) -> str:
+        return f'<{self.text}>'
 
     def undraw(self)->None:
         self.visible = False

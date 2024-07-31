@@ -7,6 +7,25 @@ import time
 pygame.init()
 pygame.font.init()
 
+### Master Asset Tracker ###
+
+master_asset_list = set()
+
+def append_asset(stack:list)->list:
+    global master_asset_list
+    if isinstance(stack, list):
+        master_asset_list.update(stack)
+    else:
+        master_asset_list.add(stack)
+
+
+def del_asset(stack:list)->None: 
+    global master_asset_list
+    if isinstance(stack, list):
+        master_asset_list.difference_update(stack)
+    else:
+        master_asset_list.discard(stack)
+
 ### WINDOWS ###
 
 MAIN_MENU = 'main_menu'
@@ -18,35 +37,26 @@ WHEIGHT = 600 # Window Height
 
 screen = pygame.display.set_mode((WWIDTH, WHEIGHT))
 
-# GLOBAL / DEFAULT FAUNT # 
+def switch_window(stack, window) -> None:
+    global master_asset_list
+    global screen
+
+    log.info(f'Window switched to `{window}`')
+    
+    undraw_many(stack, screen)
+
+def get_current_image(window):
+
+    if window == MAIN_MENU:
+        return main_img
+    elif window == CONFIG_MENU:
+        return config_img
+    elif window == GAME_MENU:
+        return game_img
+
+# GLOBAL / DEFAULT FONT # 
 
 FONT = pygame.font.Font('API101/Open Trivia API/assets/Lexend-Regular.ttf', 18) # Main Font
-
-### Master Asset Tracker ###
-
-master_asset_list = []
-
-def append_asset(asset:list)->list:
-    global master_asset_list
-
-    for element in asset:
-        master_asset_list.append(element)
-
-def del_asset(asset:list)->None: ##### [button 1, button 2] --------------- [button4, button2, button3, button1]
-    for i in range(len(asset)):
-        counter = 0                          ############ NOT FUNCTIONAL ################
-        for j in master_asset_list:
-            if j == asset[i]:
-                master_asset_list.pop(counter)
-            counter += 1
-    return master_asset_list
-
-def switch_window(window, asset_list:List[Button] = master_asset_list): ### ONGOING (ESSENTIAL) ###
-
-    for element in asset_list:
-        if isinstance(Button, element):
-            element.undraw()
-    return
 
 ### Load Image Components ###
 
@@ -63,8 +73,17 @@ def load_image(path:str, scaling:tuple) -> pygame.Surface:
         log.warning(f'Error while loading image execution. Error: {e}')
         return None
 
-main_img_path = 'API101/Open Trivia API/assets/main_background.jpg' # Main Image Path
-main_img = load_image(main_img_path, (WWIDTH, WHEIGHT)) # pygame Image Object
+MAIN_IMG_PATH = 'API101/Open Trivia API/assets/main_background.jpg' # Main Image Path
+CONFIG_IMG_PATH = 'API101/Open Trivia API/assets/config_background.png' # Config Image Path
+GAME_IMG_PATH = 'API101/Open Trivia API/assets/game_background.jpg'
+
+# pygame Image Objects
+try:
+    main_img = load_image(MAIN_IMG_PATH, (WWIDTH, WHEIGHT)) 
+    config_img = load_image(CONFIG_IMG_PATH, (WWIDTH, WHEIGHT))
+    game_img = load_image(GAME_IMG_PATH, (WWIDTH, WHEIGHT))
+except Exception:
+    log.warning('Could not load one or more background images.')
 
 def screen_fill(img):
     
@@ -87,17 +106,15 @@ main_start_btn = Button(WWIDTH/2 - MAIN_BTN_WIDTH/2, WHEIGHT/2 - 50, 150, 70, 'S
 main_quit_btn = Button(WWIDTH/2 - MAIN_BTN_WIDTH/2, WHEIGHT/2 + 50, 150, 70, 'Quit', FONT, (0,0,0), (250, 250, 250), (100,100,100))
 
 # Quit Game Options
-quit_confirm_yes = Button(WWIDTH/2 - MAIN_BTN_WIDTH/2 - 220, WHEIGHT/2 + 50, 150, 70, 'Yes', FONT, (0,0,0), (250, 250, 250), (100,100,100))
-quit_confirm_no = Button(WWIDTH/2 - MAIN_BTN_WIDTH/2 + 220, WHEIGHT/2 + 50, 150, 70, 'No', FONT, (0,0,0), (250, 250, 250), (100,100,100))
+quit_confirm_yes = Button(WWIDTH/2 - MAIN_BTN_WIDTH/2 - 120, WHEIGHT/2, 150, 70, 'Yes', FONT, (0,0,0), (250, 250, 250), (100,100,100))
+quit_confirm_no = Button(WWIDTH/2 - MAIN_BTN_WIDTH/2 + 120, WHEIGHT/2, 150, 70, 'No', FONT, (0,0,0), (250, 250, 250), (100,100,100))
 
 ### Support Functions ###
 
 # Visibility / Tracking #
 
 def make_visible(stack:List[Button])->None:
-    if len(stack) < 1:
-        return
-    
+
     for button in stack:
         if not isinstance(button, Button):
             raise TypeError(f'Type: {str(type(button))} not accepted. Stack must contain only button instances')
@@ -105,10 +122,7 @@ def make_visible(stack:List[Button])->None:
     
     append_asset(stack)
     
-
 def make_invisible(stack:List[Button])->None:
-    if len(stack) < 1:
-        return
     
     for button in stack:
         if not isinstance(button, Button):
@@ -118,16 +132,21 @@ def make_invisible(stack:List[Button])->None:
     del_asset(stack)
 
 def draw_many(stack:List[Button], screen)->None:
-    if len(stack) < 1:
-        return
-    
-    for button in stack:
 
+    for button in stack:
         if not isinstance(button, Button):
             raise TypeError(f'Type: {str(type(button))} not accepted. Stack must contain only button instances')
-        button.draw(screen)
-        
-    append_asset(stack)
+        if button.visible:
+            button.draw(screen)
+            append_asset([button])
+
+def undraw_many(stack, screen) -> None:
+    for button in stack:
+        if not isinstance(button, Button):
+            raise TypeError(f'Type: {str(type(button))} not accepted. Stack must contain only button instances')
+        if button.visible:
+            button.undraw()
+            del_asset([button])
 
 # Quitting #
 

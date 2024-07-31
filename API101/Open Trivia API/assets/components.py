@@ -43,7 +43,7 @@ def switch_window(stack, window) -> None:
 
     log.info(f'Window switched to `{window}`')
     
-    undraw_many(stack, screen)
+    undraw_many(stack)
 
 def get_current_image(window):
 
@@ -101,13 +101,18 @@ def screen_fill(img):
 MAIN_BTN_WIDTH = 150
 MAIN_BTN_HEIGHT = 70
 
-# Main Menu
+### Main Menu ###
 main_start_btn = Button(WWIDTH/2 - MAIN_BTN_WIDTH/2, WHEIGHT/2 - 50, 150, 70, 'Start', FONT, (0,0,0), (250, 250, 250), (100,100,100))
 main_quit_btn = Button(WWIDTH/2 - MAIN_BTN_WIDTH/2, WHEIGHT/2 + 50, 150, 70, 'Quit', FONT, (0,0,0), (250, 250, 250), (100,100,100))
 
 # Quit Game Options
 quit_confirm_yes = Button(WWIDTH/2 - MAIN_BTN_WIDTH/2 - 120, WHEIGHT/2, 150, 70, 'Yes', FONT, (0,0,0), (250, 250, 250), (100,100,100))
 quit_confirm_no = Button(WWIDTH/2 - MAIN_BTN_WIDTH/2 + 120, WHEIGHT/2, 150, 70, 'No', FONT, (0,0,0), (250, 250, 250), (100,100,100))
+
+
+### Configuration Menu ###
+
+back_main_btn = Button(180, 460, 150, 70, 'Back', FONT,(0,0,0), (250, 250, 250), (100,100,100))
 
 ### Support Functions ###
 
@@ -140,7 +145,7 @@ def draw_many(stack:List[Button], screen)->None:
             button.draw(screen)
             append_asset([button])
 
-def undraw_many(stack, screen) -> None:
+def undraw_many(stack) -> None:
     for button in stack:
         if not isinstance(button, Button):
             raise TypeError(f'Type: {str(type(button))} not accepted. Stack must contain only button instances')

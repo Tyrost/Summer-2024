@@ -1,10 +1,9 @@
 import pygame
 from assets.components import *
-from url_request import get_trivia, CROSS_MARK, CHECK_MARK
+from url_request import get_trivia, CHECK_MARK
 import logging as log
 
 current_window = MAIN_MENU
-window_assets = []
 quit_flag = False
 running = True
 
@@ -28,7 +27,6 @@ def main():
         elapsed_time = current_time - start_time
 
         if elapsed_time >= 1.5:
-            log.info(master_asset_list)
             start_time = current_time
         
     ### Terminate Game Event ###
@@ -48,9 +46,13 @@ def main():
             handle_main_menu(event)
 
         elif current_window == CONFIG_MENU:
-            pass
+            
+            hadle_config_window(event)
+
         elif current_window == GAME_MENU:
-            pass
+            
+            handle_game_window(event)
+
         pygame.display.update() # Update Changes
 
     pygame.quit()
@@ -70,25 +72,36 @@ def handle_main_menu(event):
         make_invisible([quit_confirm_yes, quit_confirm_no])
 
     if main_start_btn.isclicked(event): # Start Game Button
-        log.info(f'Start Button Clicked {CHECK_MARK}')
+        log.info(f'Start Button Clicked.')
         current_window = CONFIG_MENU
 
-        switch_window(window_assets, CONFIG_MENU) ### WORK IN PROGRESS ###
+        switch_window(window_assets, CONFIG_MENU)
+        make_visible(window_assets)
+        quit_flag = False
         
     if main_quit_btn.isclicked(event): # Quit Game Event
-        log.info(f'Quit Button Clicked {CHECK_MARK}')
+        log.info(f'Quit Button Clicked.')
 
         make_invisible([main_start_btn, main_quit_btn])
         make_visible([quit_confirm_yes, quit_confirm_no])
 
         quit_flag = True
     
-    if quit_flag and quit_command_ex(event):
-        
-        running = False
+    if quit_flag and quit_command_ex(event): 
+        running = False    
 
 def hadle_config_window(event):
-    pass
+    global current_window
+
+    window_asset = [back_main_btn]
+    draw_many([back_main_btn], screen)
+
+    if back_main_btn.isclicked(event):
+        log.info('Back to main menu...')
+        current_window = MAIN_MENU
+
+        switch_window(window_asset, MAIN_MENU)
+        make_visible(window_asset)
 
 def handle_game_window(event):
     pass

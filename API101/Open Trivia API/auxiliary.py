@@ -25,7 +25,7 @@ def check_category(category:str)->tuple:
     and it holds the boolean value checking existance within the response.
     '''
     # Check data type
-    if not isinstance(category, str): 
+    if not isinstance(category, int): 
         return False
 
     # Send API request
@@ -39,7 +39,7 @@ def check_category(category:str)->tuple:
     categories_json = response.json()['trivia_categories']
     
     # Return JSON and boolean that checks for existance
-    return categories_json, any(cat['id'] == category for cat in response)
+    return categories_json, any(cat['id'] == category for cat in categories_json)
 
 
 def check_diff(diff:str)->bool:

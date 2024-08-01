@@ -2,6 +2,7 @@ import pygame
 from assets.components import *
 from url_request import get_trivia, CHECK_MARK
 import logging as log
+import time
 
 current_window = MAIN_MENU
 quit_flag = False
@@ -23,11 +24,12 @@ def main():
 
     # TIME TRACKER
     
-        current_time = time.time()
-        elapsed_time = current_time - start_time
+        # current_time = time.time()
+        # elapsed_time = current_time - start_time
 
-        if elapsed_time >= 1.5:
-            start_time = current_time
+        # if elapsed_time >= 0.8:
+        #     pass # Test goes HERE!
+        #     start_time = current_time
         
     ### Terminate Game Event ###
 
@@ -47,7 +49,7 @@ def main():
 
         elif current_window == CONFIG_MENU:
             
-            hadle_config_window(event)
+            handle_config_window(event)
 
         elif current_window == GAME_MENU:
             
@@ -62,10 +64,10 @@ def handle_main_menu(event):
     global running
     global current_window
     global quit_flag
+    global MAIN_WINDOW_ASSETS
 
-    window_assets = [main_start_btn, main_quit_btn, quit_confirm_yes, quit_confirm_no]
     # Draw any possible usable buttons within the main menu window
-    draw_many(window_assets, screen)
+    draw_many(MAIN_WINDOW_ASSETS, screen)
 
     # Start with visibility to quit confirmation buttons = False
     if not quit_flag:
@@ -75,8 +77,7 @@ def handle_main_menu(event):
         log.info(f'Start Button Clicked.')
         current_window = CONFIG_MENU
 
-        switch_window(window_assets, CONFIG_MENU)
-        make_visible(window_assets)
+        switch_window(MAIN_WINDOW_ASSETS, CONFIG_MENU)
         quit_flag = False
         
     if main_quit_btn.isclicked(event): # Quit Game Event
@@ -90,18 +91,82 @@ def handle_main_menu(event):
     if quit_flag and quit_command_ex(event): 
         running = False    
 
-def hadle_config_window(event):
+def handle_config_window(event):
+    global config
     global current_window
+    global display_window_message
+    global CONFIG_WINDOW_ASSETS
 
-    window_asset = [back_main_btn]
-    draw_many([back_main_btn], screen)
+    draw_many(CONFIG_WINDOW_ASSETS, screen)
 
     if back_main_btn.isclicked(event):
         log.info('Back to main menu...')
         current_window = MAIN_MENU
 
-        switch_window(window_asset, MAIN_MENU)
-        make_visible(window_asset)
+        switch_window(CONFIG_WINDOW_ASSETS, MAIN_MENU)
+
+    if category_left.isclicked(event):
+        if config['category'] > 1:
+            config['category'] -= 1
+            log.info('TButton LEFT: -1')
+        else:
+            config['category'] = 32
+        return
+
+    if category_right.isclicked(event):
+        if config['category'] < 32:
+            config['category'] += 1
+            log.info('TButton RIGHT: +1')        
+        else:
+            config['category'] = 1
+        return
+    
+    if difficulty_left.isclicked(event):
+        if config['difficulty'] > 1:
+            config['difficulty'] -= 1
+            log.info('TButton LEFT: -1')
+        else:
+            config['difficulty'] = 3
+        return
+
+    if difficulty_right.isclicked(event):
+        if config['difficulty'] < 3:
+            config['difficulty'] += 1
+            log.info('TButton RIGHT: +1')
+        else:
+            config['difficulty'] = 1
+
+    if type_left.isclicked(event):
+        if config['type'] > 1:
+            config['type'] -= 1
+            log.info('TButton RIGHT: -1')        
+        else:
+            config['type'] = 1
+        return
+
+    if type_right.isclicked(event):
+        if config['type'] < 3:
+            config['type'] += 1
+            log.info('TButton RIGHT: +1')        
+        else:
+            config['type'] = 1
+        return        
+
+    if number_left.isclicked(event):
+        if config['amount'] > 5:
+            config['amount'] -= 5
+            log.info('TButton RIGHT: -5')        
+        else:
+            config['amount'] = 50
+        return
+
+    if number_right.isclicked(event):
+        if config['amount'] < 50:
+            config['amount'] += 5
+            log.info('TButton RIGHT: -5')        
+        else:
+            config['amount'] = 5
+        return
 
 def handle_game_window(event):
     pass

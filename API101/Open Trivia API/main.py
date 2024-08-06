@@ -8,6 +8,17 @@ current_window = MAIN_MENU
 quit_flag = False
 running = True
 
+config_matrix = create_config_matrix()
+config_table = Table(screen, (200, 150), FONT, (0, 0, 0), config_matrix, 4)
+
+def update_config(new_config):
+    global config
+    global config_matrix
+
+    config.update(new_config)
+    config_matrix = create_config_matrix()
+    config_table.text = config_matrix
+
 def main():
     global current_window
     global master_asset_list
@@ -24,12 +35,12 @@ def main():
 
     # TIME TRACKER
     
-        # current_time = time.time()
-        # elapsed_time = current_time - start_time
+        current_time = time.time()
+        elapsed_time = current_time - start_time
 
-        # if elapsed_time >= 0.8:
-        #     pass # Test goes HERE!
-        #     start_time = current_time
+        if elapsed_time >= 1.5:
+            log.info(config_matrix) # Test goes HERE!
+            start_time = current_time
         
     ### Terminate Game Event ###
 
@@ -106,8 +117,8 @@ def handle_config_window(event):
         switch_window(CONFIG_WINDOW_ASSETS, MAIN_MENU)
 
     if category_left.isclicked(event):
-        if config['category'] > 1:
-            config['category'] -= 1
+        if config['category'] > 9:
+            update_config({'category': config['category'] - 1}) 
             log.info('TButton LEFT: -1')
         else:
             config['category'] = 32
@@ -115,57 +126,57 @@ def handle_config_window(event):
 
     if category_right.isclicked(event):
         if config['category'] < 32:
-            config['category'] += 1
+            update_config({'category': config['category'] + 1})#config['category'] + 1
             log.info('TButton RIGHT: +1')        
         else:
-            config['category'] = 1
+            update_config({'category': 9})#config['category'] = 9
         return
     
     if difficulty_left.isclicked(event):
         if config['difficulty'] > 1:
-            config['difficulty'] -= 1
+            update_config({'difficulty': config['difficulty'] - 1})#config['difficulty'] - 1
             log.info('TButton LEFT: -1')
         else:
-            config['difficulty'] = 3
+            update_config({'difficulty': 3})#config['difficulty'] = 3
         return
 
     if difficulty_right.isclicked(event):
         if config['difficulty'] < 3:
-            config['difficulty'] += 1
+            update_config({'difficulty': config['difficulty'] + 1})#config['difficulty'] += 1
             log.info('TButton RIGHT: +1')
         else:
-            config['difficulty'] = 1
+            update_config({'difficulty': 1})#config['difficulty'] = 1
 
     if type_left.isclicked(event):
         if config['type'] > 1:
-            config['type'] -= 1
-            log.info('TButton RIGHT: -1')        
+            update_config({'type': config['type'] - 1})#config['type'] -= 1
+            log.info('TButton LEFT: -1')        
         else:
-            config['type'] = 1
+            update_config({'type': 3})#config['type'] = 3
         return
 
     if type_right.isclicked(event):
         if config['type'] < 3:
-            config['type'] += 1
+            update_config({'type': config['type'] + 1})#config['type'] += 1
             log.info('TButton RIGHT: +1')        
         else:
-            config['type'] = 1
+            update_config({'type': 1})#config['type'] = 1
         return        
 
     if number_left.isclicked(event):
         if config['amount'] > 5:
-            config['amount'] -= 5
-            log.info('TButton RIGHT: -5')        
+            update_config({'amount': config['amount'] - 5})#config['amount'] - 5
+            log.info('TButton LEFT: -5')        
         else:
-            config['amount'] = 50
+            update_config({'amount': 50})#config['amount'] = 50
         return
 
     if number_right.isclicked(event):
         if config['amount'] < 50:
-            config['amount'] += 5
-            log.info('TButton RIGHT: -5')        
+            update_config({'amount': config['amount'] + 5})#config['amount'] + 5
+            log.info('TButton RIGHT: +5')        
         else:
-            config['amount'] = 5
+            update_config({'amount': 5})#config['amount'] = 5
         return
 
 def handle_game_window(event):

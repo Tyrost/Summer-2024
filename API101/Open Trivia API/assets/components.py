@@ -121,15 +121,49 @@ MAIN_WINDOW_ASSETS = [main_start_btn, main_quit_btn, quit_confirm_yes, quit_conf
 ### Configuration Menu ###
 
 config = {
-    'category': 1,
+    'category': 9,
     'difficulty': 1,
     'type': 1,
     'amount': 5,
 }
 
-category_dict = check_category(config['category'])[0]['trivia_categories']['id'][config['category']]
+def find_category_name():
+    category_stack, exists = check_category(config['category'])
 
-config_matrix = [['Category', category_dict]]
+    if not exists:
+        return "Category not found"
+
+    for cat in category_stack:
+        if config['category'] == cat['id']:
+            return cat['name']
+        
+    return "Category not found"
+        
+def give_diff_name():
+    if config['difficulty'] == 1:
+        return 'Easy'
+    if config['difficulty'] == 2:
+        return 'Medium'
+    if config['difficulty'] == 3:
+        return 'Hard'
+
+def give_type_name():
+    if config['type'] == 1:
+        return 'Any'
+    if config['type'] == 2:
+        return 'Multiple Choice'
+    if config['type'] == 3:
+        return 'True or False'
+
+def create_config_matrix():
+    matrix = []
+    matrix.append(['Category', find_category_name()]) # Category
+    matrix.append(['Difficulty', give_diff_name()]) # Difficulty
+    matrix.append(['Type', give_type_name()]) # Type
+    matrix.append(['Amount', str(config['amount'])]) # Amount of Questions
+    return matrix
+
+config_matrix = create_config_matrix()
 
 back_main_btn = Button(180, 460, 150, 70, 'Back', FONT,(0,0,0), (250, 250, 250), (100,100,100))
 
@@ -155,7 +189,7 @@ number_left = TriangleButton([(WWIDTH - 320, 130 + 90 * 3), (WWIDTH - 320, 200 +
 number_btn = Button(WWIDTH - 310, 130 + 90 * 3, 150, 70, 'Amount', FONT,(0,0,0), (250, 250, 250), (100,100,100), c_hover=False)
 number_right = TriangleButton([(WWIDTH - 150, 130 + 90 * 3), (WWIDTH - 150, 200 + 90 * 3), (WWIDTH - 100, 165 + 90 * 3)], 'Right Amount', (250, 250, 250), (100,100,100))
 
-config_table = Table(screen, (200, 150), FONT, (0, 0, 0), config_matrix, 3)
+config_table = Table(screen, (200, 150), FONT, (0, 0, 0), config_matrix, 4) # [['idk', 'idk'], ['idk', 'idk2'], ['idk', 'idk3'], ['idk', 'idk4']]
 
 CONFIG_WINDOW_ASSETS = [back_main_btn, category_btn, category_left, category_right, difficulty_btn, difficulty_left, difficulty_right, type_btn, type_left, type_right ,number_btn, number_left, number_right, config_table]
 

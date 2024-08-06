@@ -4,6 +4,8 @@ from typing import Union
 CHECK_MARK = '\033[32m\u2714\033[0m'
 CROSS_MARK = '\033[31m\u2716\033[0m' 
 
+category_cache = None
+
 def check_amount(amount:Union[int, str])->bool:
     '''
     Guardian code function that returns a boolean value.
@@ -16,6 +18,7 @@ def check_amount(amount:Union[int, str])->bool:
     return result
 
 def check_category(category:str)->tuple:
+    global category_cache
     '''
     Guardian code function that returns a tuple value.
     Checks the string category for its data type and that it is included within the API's JSON response.
@@ -28,18 +31,20 @@ def check_category(category:str)->tuple:
     if not isinstance(category, int): 
         return False
 
-    # Send API request
-    response = requests.get('https://opentdb.com/api_category.php')
+    if category_cache is None:
+        # Send API request
+        response = requests.get('https://opentdb.com/api_category.php')
+        
+        # Checks that response code is only 200. Returns an error otherwise.
+        if response.status_code != 200: 
+            return f'Error {response.status_code}', False
+        
+        # Creastes the JSON representation of the http response
+        category_cache = response.json()['trivia_categories']
     
-    # Checks that response code is only 200. Returns an error otherwise.
-    if response.status_code != 200: 
-        return f'Error {response.status_code}', False
-    
-    # Creastes the JSON representation of the http response
-    categories_json = response.json()['trivia_categories']
-    
+    exists = any(cat['id'] == category for cat in category_cache)
     # Return JSON and boolean that checks for existance
-    return categories_json, any(cat['id'] == category for cat in categories_json)
+    return category_cache, exists
 
 
 def check_diff(diff:str)->bool:

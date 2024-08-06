@@ -65,15 +65,12 @@ class Button:
 # Courtesy of ChatGPT :)
 class TriangleButton:
 
-    def __init__(self, vertices:List[Tuple[float]], label:str, color:tuple, hover:tuple) -> None:
-
+    def __init__(self, vertices: List[Tuple[float]], label: str, color: tuple, hover: tuple) -> None:
         self.vertices = vertices
-
         self.label = label
         self.color = color
         self.current_color = color
         self.hover = hover
-
         self.clicked = False
         self.visible = True
 
@@ -85,18 +82,6 @@ class TriangleButton:
         y = (self.vertices[0][1] + self.vertices[1][1] + self.vertices[2][1]) // 3
         return (x, y)
         
-    def handle_event(self, event: pygame.event.Event) -> bool:
-        if event.type == pygame.MOUSEMOTION:
-            if self.is_hovered(event.pos):
-                self.current_color = self.hover
-            else:
-                self.current_color = self.color
-
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.is_hovered(event.pos):
-                return True
-        return False
-
     def is_hovered(self, mouse_pos: Tuple[int, int]) -> bool:
         return self.is_point_in_triangle(mouse_pos, self.vertices[0], self.vertices[1], self.vertices[2])
 
@@ -122,15 +107,19 @@ class TriangleButton:
     def isclicked(self, event):
         if not self.visible:
             return
+        mouse_pos = pygame.mouse.get_pos()
+        if self.is_hovered(mouse_pos):
+            self.current_color = self.hover
+        else:
+            self.current_color = self.color
+        
         try:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not self.clicked:
                 self.clicked = True
-                mouse_pos = pygame.mouse.get_pos()
-                return self.is_point_in_triangle(mouse_pos, self.vertices[0], self.vertices[1], self.vertices[2])
+                if self.is_hovered(mouse_pos):
+                    return True
             elif event.type == pygame.MOUSEBUTTONUP:
                 self.clicked = False
-            else:
-                return False
         except Exception as e:
             print(f'Error in button click handling: {e}')
         return False
@@ -157,27 +146,31 @@ class Table:
 
         self.visible = True
 
-    def draw(self, screen = None) -> None:
-        """
-        Draws a table of text on the Pygame surface.
+        self.column_widths = [0] * len(text[0])
+        for row in text:
+            for i, cell in enumerate(row):
+                text_surface = self.font.render(cell, True, self.fontColor)
+                self.column_widths[i] = max(self.column_widths[i], text_surface.get_width())
 
-        Parameters:
-            data (List[List[str]]): The data to be displayed in the table. Each sublist represents a row.
-        """
+    def draw(self, screen = None) -> None:
         if not self.visible:
-            return 
+            return
         
         x, y = self.position
         for row in self.text:
             max_height = 0
             row_surfaces = []
-            for cell in row:
+            
+            for i, cell in enumerate(row):
                 text_surface = self.font.render(cell, True, self.fontColor)
                 row_surfaces.append(text_surface)
                 max_height = max(max_height, text_surface.get_height())
+            
             for i, cell_surface in enumerate(row_surfaces):
-                self.surface.blit(cell_surface, (x + i * (cell_surface.get_width() + self.cell_padding), y))
-            y += max_height + self.cell_padding
+                cell_x = x + sum(self.column_widths[:i]) + i * 2 * self.cell_padding
+                self.surface.blit(cell_surface, (cell_x + self.cell_padding, y + self.cell_padding))
+            
+            y += max_height + 2 * self.cell_padding
 
     def undraw(self):
         self.visible = False

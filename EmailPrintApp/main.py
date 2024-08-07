@@ -6,6 +6,8 @@ def main():
 
     set_window()
 
+    timer_label.timer_label.pack_forget()
+
     # Main Frame Buttons Show #
     switch_frame(FRAME_MAIN)
     

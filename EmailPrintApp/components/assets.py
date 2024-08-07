@@ -1,9 +1,11 @@
 import tkinter as tk
 from tkinter import font
 import logging as log
+import json
 from components.TimerApp import TimerApp
 from typing import List, Tuple
 from EmailScript.email_script_handler import read_email_script
+from Setup.setup_system_handler import credential_obj, save_credentials
 import threading
 
 log.basicConfig(level=log.INFO)
@@ -12,7 +14,9 @@ log.basicConfig(level=log.INFO)
 
 printer_set = False
 excel_set = False # Will be used to store string path. Will evaluate as True
-credentials_set = False # Will be used to store string path. Will evaluate as True
+
+current_email = None
+current_password = None
 
 #_________________________________________________________________ Window _________________________________________________________________#
 
@@ -56,6 +60,7 @@ def switch_frame(frame:tk.Frame):
 
     bind_hover_effects()
 
+            
 # Button Division Canvas #
 
 MAIN_CANVAS = tk.Canvas(WINDOW, width=800, height=600)
@@ -64,6 +69,10 @@ MAIN_CANVAS.pack()
 # Timer #
 
 timer_label = TimerApp(FRAME_RUN)
+
+password_setup_txt = 'IMPORTANT:\nEMAIL SETUP INSTRUCTIONS.\nPassword IS NOT the same password used for you email.\nProceed with the following link:\nhttps://myaccount.google.com/u/3/apppasswords?\nWithin the text box labeled "App name", please input "Python Automation Script".\nPlease use the given auto-generated code as a password to input onto this program.'
+instructions_email_setup = tk.Label(WINDOW, text=password_setup_txt, width=65, height=8)
+instructions_email_setup.place(x=275, y=450)
 
 #_________________________________________________________________ Status _________________________________________________________________#
 
@@ -114,6 +123,7 @@ def handle_click_setup():
     print('Set Up Button Clicked! Switch')
     switch_frame(FRAME_SETUP)
     show_button_on_canvas(setup_frame_btns)
+    hide_button_on_canvas([(confirm_rect, confirm_text)]) # Only for Confirm Button
 
 def handle_click_see_mail():
     print('See Mail Button Clicked! Switch')
@@ -179,15 +189,50 @@ def handle_stop_script():
     stop_email_thread()
 
     log.info(f'Timer, Status: {status}: {running}')
+    return
 
 # Set Up Frame Handlers #
 
 def handle_set_printer():
     pass
 
-def handle_set_credentials():
-    pass
+email_editor = None
+pw_editor = None
 
+def handle_set_credentials():
+    global confirm_rect, confirm_text, email_editor, pw_editor
+    
+    show_button_on_canvas([(confirm_rect, confirm_text)])
+    
+    if email_editor is None or pw_editor is None:
+        editors = credential_obj(WINDOW, ['Email', 'Password'], 200, [100, 150], 33, 1, FONT, current_frame, FRAME_SETUP)
+        email_editor, pw_editor = editors
+    if current_frame != FRAME_SETUP:
+        email_editor.pack_forget()
+        pw_editor.pack_forget()
+        
+    return email_editor, pw_editor
+
+def on_confirm_click(credentials_path='EmailPrintApp/Setup/credentials.json'):
+    global email_editor, pw_editor, current_email, current_password
+    
+    current_email = email_editor.get_text()
+    current_password = pw_editor.get_text()
+    
+    confirmed_cred = None
+    
+    if '@gmail.com' not in current_email:
+        confirmed_cred = tk.Label(WINDOW, text=f'Invalid Email. Must be Google Email ending in @gmail.com', width=50, height=2)
+    else:    
+        confirmed_cred = tk.Label(WINDOW, text=f'Credentials Confirmed. Email: {current_email}, Password: {current_password}', width=50, height=2)
+        
+        save_credentials(email_editor, pw_editor, credentials_path)
+    
+    confirmed_cred.pack()
+    confirmed_cred.place(x=200, y=200)
+    
+    WINDOW.after(3000, confirmed_cred.destroy)
+        
 def handle_set_excel_path():
     pass
   
@@ -231,11 +276,13 @@ mail_frame_btns = [(back_to_main_rect, back_to_main_text)]
 
 # SetUp Frame Buttons #
 
+confirm_rect, confirm_text = create_button(580, 60, 'Confirm', on_confirm_click)
+
 set_printer_rect, set_printer_text = create_button(WWIDTH//2 - BUTTON_WIDTH//2, 200, 'Set Printer', command=handle_set_printer)
 set_credentials_rect, set_credentials_text = create_button(WWIDTH//2 - BUTTON_WIDTH//2, 200 + BUTTON_HEIGHT + SEPARATION, 'Set Email', command=handle_set_credentials)
 set_excel_rect, set_excel_text = create_button(WWIDTH//2 - BUTTON_WIDTH//2, 200 + 2 * (BUTTON_HEIGHT + SEPARATION), 'Set Excel', command=handle_set_excel_path)
 
-setup_frame_btns = [(back_to_main_rect, back_to_main_text), (set_printer_rect, set_printer_text),(set_credentials_rect, set_credentials_text),(set_excel_rect, set_excel_text)]
+setup_frame_btns = [(back_to_main_rect, back_to_main_text), (set_printer_rect, set_printer_text),(set_credentials_rect, set_credentials_text),(set_excel_rect, set_excel_text), (confirm_rect, confirm_text)]
 
 # Run Frame Buttons #
 

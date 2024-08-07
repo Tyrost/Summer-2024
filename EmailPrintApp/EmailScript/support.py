@@ -3,9 +3,12 @@ import os
 
 error_count = 0
 
-credentials_json = 'Summer-2024/EmailPrintApp/Setup/credentials.json'
-attachments_dir = 'Summer-2024/EmailPrintApp/EmailScript/attachments'
-emails_json = 'Summer-2024/EmailPrintApp/EmailScript/emails.json'
+credentials_json = 'EmailPrintApp/Setup/credentials.json'
+#'Summer-2024/EmailPrintApp/Setup/credentials.json' Win
+attachments_dir = 'EmailPrintApp/EmailScript/attachments'
+#'Summer-2024/EmailPrintApp/EmailScript/attachments' Win
+emails_json = 'EmailPrintApp/EmailScript/emails.json'
+#'Summer-2024/EmailPrintApp/EmailScript/emails.json'
 
 with open(credentials_json, 'r') as f:
     data = json.load(f)

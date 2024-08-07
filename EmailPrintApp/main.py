@@ -11,6 +11,7 @@ def main():
     
     show_button_on_canvas(main_frame_btns)
 
+    WINDOW.update()
     WINDOW.mainloop()
 
 if __name__ == '__main__':

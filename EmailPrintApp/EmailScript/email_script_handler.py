@@ -34,7 +34,7 @@ def get_message_body_and_attachments(message):
 if not os.path.isdir(attachments_dir):
     os.makedirs(attachments_dir)
 
-def read_email_script(running, stop_event):
+def read_email_script(running, stop_event, callback=None):
     '''
     Searches for UNSEEN emails only
     '''
@@ -83,13 +83,22 @@ def read_email_script(running, stop_event):
 
             mail.close()
             mail.logout()
-
+            
+        except ValueError:
+            print('Email setup not yet set...')
+            if callback:
+                callback(None)
+            return
+        
         except Exception as e:
-            print(f'An error occurred:\n{e}')
+            print(f'An error occurred\nPerhaps it has to do with credentaials.\nPlease navigate to MainMenu > SetUp > Set Email and read the instructions carefully.\n\nError:\n{e}\n\nRetrying in 60 seconds...\n')
             error_count += 1
             if error_count == 3:
+                print('Ended...\n')
+                if callback:
+                    callback(None)
                 return
-            time.sleep(60)
-            print('Running...')
+            time.sleep(10)
+            print('Running...\n')
     
-    print('Connection Ended')
+    print('Connection Ended\n')

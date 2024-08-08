@@ -1,18 +1,23 @@
 import tkinter as tk
 from tkinter import font
 import logging as log
+import json
 from components.TimerApp import TimerApp
 from typing import List, Tuple
 from EmailScript.email_script_handler import read_email_script
+from Setup.setup_system_handler import credential_obj, save_credentials
 import threading
+from Setup.SystemicFunctions.setup_printer_system import *
 
 log.basicConfig(level=log.INFO)
 
 #_________________________________________________________________ Globals _________________________________________________________________ #
 
-printer_set = False
+default_printer = None
 excel_set = False # Will be used to store string path. Will evaluate as True
-credentials_set = False # Will be used to store string path. Will evaluate as True
+
+current_email = None
+current_password = None
 
 #_________________________________________________________________ Window _________________________________________________________________#
 
@@ -30,8 +35,9 @@ FRAME_MAIN = tk.Frame(container)
 FRAME_RUN = tk.Frame(container)
 FRAME_SETUP = tk.Frame(container)
 FRAME_MAIL = tk.Frame(container)
+FRAME_PRINTER = tk.Frame(container)
 
-frames = [FRAME_MAIN, FRAME_RUN, FRAME_SETUP, FRAME_MAIL]
+frames = [FRAME_MAIN, FRAME_RUN, FRAME_SETUP, FRAME_MAIL, FRAME_PRINTER]
 
 for frame in frames:
     frame.grid(row=0, column=0, sticky='nsew')
@@ -53,23 +59,31 @@ def switch_frame(frame:tk.Frame):
     current_frame = frame
     hide_all(all_frame_btns)
     frame.tkraise()
-
+    log.info(f'Switched onto {current_frame} frame')
     bind_hover_effects()
+
+    # Make All Existant Widgets Unseeable
+    if current_frame != FRAME_SETUP:
+        email_editor.text_editor.place_forget()
+        pw_editor.text_editor.place_forget()
+        instructions_email_setup.place_forget()
+    
+    if current_frame != FRAME_PRINTER:
+        default_printer_editor.text_editor.place_forget()
+        
+
 
 # Button Division Canvas #
 
 MAIN_CANVAS = tk.Canvas(WINDOW, width=800, height=600)
 MAIN_CANVAS.pack()
 
-# Timer #
-
-timer_label = TimerApp(FRAME_RUN)
-
 #_________________________________________________________________ Status _________________________________________________________________#
+
+current_frame = FRAME_MAIN
 
 status = 'Not Running'
 running = False
-current_frame = FRAME_MAIN
 
 def create_status_icon(window):
     icon_canvas = tk.Canvas(window, width=50, height=50, highlightthickness=0)
@@ -92,6 +106,7 @@ status_label = create_status_label(WINDOW)
 
 def update_status(new_status):
     global status
+
     status = new_status
     status_label.config(text=f'Status: {status}')
     if status == 'Running':
@@ -99,31 +114,69 @@ def update_status(new_status):
     else:
         update_icon_color(status_icon, circle, 'red')
 
+# _________________________________________________________________ Labels / Widgets _________________________________________________________________ #
+
+# Timer #
+
+timer_label = TimerApp(FRAME_RUN)
+
+# Email Set Up Instructions Label #
+
+password_setup_txt = 'IMPORTANT:\nEMAIL SETUP INSTRUCTIONS.\nPassword IS NOT the same password used for you email.\nProceed with the following link:\nhttps://myaccount.google.com/u/3/apppasswords?\nWithin the text box labeled "App name", please input "Python Automation Script".\nPlease use the given auto-generated code as a password to input onto this program.'
+instructions_email_setup = tk.Label(WINDOW, text=password_setup_txt, width=65, height=8)
+
+# Set Email Widgets #
+
+email_editor, pw_editor = credential_obj(WINDOW, ['Email', 'Password'], 33, 1, FONT)
+
+if current_frame != FRAME_SETUP:
+    email_editor.text_editor.pack_forget()
+    pw_editor.text_editor.pack_forget()
+
+# Set Printer Widgets #
+
+default_printer_editor, none = credential_obj(WINDOW, ['Default Printer', 'none'], 33, 1, FONT)
+none.text_editor.destroy()
+
+if current_frame != FRAME_PRINTER:
+    default_printer_editor.text_editor.pack_forget()
+
 #_________________________________________________________________ Handlers _________________________________________________________________# 
 
 # Universal Handlers #
 
 def handle_back_to_main():
-    print('Back Button Clicked! Back to Main')
+
+    log.info('Back Button Clicked! Back to Main')
     switch_frame(FRAME_MAIN)
     show_button_on_canvas(main_frame_btns)
 
-# Main Frame Handlers #
+#__________________________ Main Frame Handlers __________________________#
 
 def handle_click_setup():
-    print('Set Up Button Clicked! Switch')
+    log.info('Set Up Button Clicked! Switch')
     switch_frame(FRAME_SETUP)
     show_button_on_canvas(setup_frame_btns)
+    hide_button_on_canvas([(confirm_rect, confirm_text)]) # Only for Confirm Button
 
 def handle_click_see_mail():
-    print('See Mail Button Clicked! Switch')
+    log.info('See Mail Button Clicked! Switch')
     switch_frame(FRAME_MAIL)
     show_button_on_canvas(mail_frame_btns)
 
 def handle_click_run():
-    print('Run Button Clicked! Switch')
+    log.info('Run Button Clicked! Switch')
     switch_frame(FRAME_RUN)
     show_button_on_canvas(run_frame_btns)
+
+def handle_set_printer_menu():
+    log.info('Printer Setup Button Clicked! Switch')
+    switch_frame(FRAME_SETUP)
+    show_button_on_canvas(printer_frame_btns)
+
+    handle_set_printer()
+
+#__________________________ Set Up Frame Handlers __________________________#
 
 # Run Frame - Handlers #
 
@@ -155,11 +208,12 @@ def handle_run_script():
 
     timer_label.start_timer()
     timer_label.timer_label.pack()
+
     update_status(status)
 
     start_email_thread()
 
-    log.info(f'Timer, Status: {status}: {running}')
+    log.info(f'Timer, Status: {status}')
 
 def handle_stop_script():
     global running
@@ -178,16 +232,74 @@ def handle_stop_script():
 
     stop_email_thread()
 
-    log.info(f'Timer, Status: {status}: {running}')
+    log.info(f'Timer, Status: {status}')
+    return
 
-# Set Up Frame Handlers #
+# Set Printer - Handlers #
+
+def on_confirm_printer():
+    global default_printer
+
+    log.info('Confirmed!')
+
+    default_printer = default_printer_editor.get_text()
+    text = ''
+
+    if setup_printer_system(default_printer):
+        text = f"Successfully set '{default_printer}' as the default printer."
+    elif not setup_printer_system(default_printer):
+        text = f"The printer '{default_printer}' is already set as the default printer."
+    elif setup_printer_system(default_printer) is None:
+        text = f'Printer name {default_printer} not available in Windows printer devices'
+
+    info_label = tk.Label(WINDOW, text=text, width=50, height=2)
+    info_label.place(x=140, y=150)
+    WINDOW.after(5000, info_label.destroy)
 
 def handle_set_printer():
-    pass
+
+    def order_str_list(l):
+        result = 'Available Printers:\n\n'
+        for element in l:
+            result += element + '\n'
+        return result
+    
+    printer_list = tk.Label(WINDOW, text=order_str_list(list_printers()), width=45, height=15)
+    
+    if current_frame == FRAME_SETUP:
+        default_printer_editor.text_editor.place(x=180, y=100)
+        printer_list.place(x=280, y=160)
+
+# Set Credentials - Handler #
 
 def handle_set_credentials():
-    pass
 
+    show_button_on_canvas([(confirm_rect, confirm_text)])
+    instructions_email_setup.place(x=205, y=450)
+    
+    if current_frame == FRAME_SETUP:
+        email_editor.text_editor.place(x=180, y=100)
+        pw_editor.text_editor.place(x=180, y=150)
+        instructions_email_setup.place(x=205, y=450)
+
+def on_confirm_click_setup(credentials_path=os.path.join(__file__,"..",'Setup','credentials.json')):
+    global email_editor, pw_editor, current_email, current_password
+    
+    current_email = email_editor.get_text()
+    current_password = pw_editor.get_text()
+    
+    confirmed_cred = None
+    
+    if '@gmail.com' not in current_email:
+        confirmed_cred = tk.Label(WINDOW, text=f'Invalid Email. Must be Google Email ending in @gmail.com', width=50, height=2)
+    else:    
+        confirmed_cred = tk.Label(WINDOW, text=f'Credentials Confirmed. Email: {current_email}, Password: {current_password}', width=50, height=2)
+        save_credentials(email_editor, pw_editor, credentials_path)
+    
+    confirmed_cred.place(x=200, y=200)
+
+    WINDOW.after(5000, confirmed_cred.destroy)
+        
 def handle_set_excel_path():
     pass
   
@@ -215,7 +327,7 @@ def create_button(x, y, text, command):
 
 # Universal Button #
 
-back_to_main_rect, back_to_main_text = create_button(70, 400, 'Back', command=handle_back_to_main)
+back_to_main_rect, back_to_main_text = create_button(70, 380, 'Back', command=handle_back_to_main)
 
 # Main Frame Buttons #
 
@@ -231,11 +343,13 @@ mail_frame_btns = [(back_to_main_rect, back_to_main_text)]
 
 # SetUp Frame Buttons #
 
-set_printer_rect, set_printer_text = create_button(WWIDTH//2 - BUTTON_WIDTH//2, 200, 'Set Printer', command=handle_set_printer)
+confirm_rect, confirm_text = create_button(WWIDTH//2 - BUTTON_WIDTH//2, 20, 'Confirm', on_confirm_click_setup)
+
+set_printer_rect, set_printer_text = create_button(WWIDTH//2 - BUTTON_WIDTH//2, 200, 'Set Printer', command=handle_set_printer_menu)
 set_credentials_rect, set_credentials_text = create_button(WWIDTH//2 - BUTTON_WIDTH//2, 200 + BUTTON_HEIGHT + SEPARATION, 'Set Email', command=handle_set_credentials)
 set_excel_rect, set_excel_text = create_button(WWIDTH//2 - BUTTON_WIDTH//2, 200 + 2 * (BUTTON_HEIGHT + SEPARATION), 'Set Excel', command=handle_set_excel_path)
 
-setup_frame_btns = [(back_to_main_rect, back_to_main_text), (set_printer_rect, set_printer_text),(set_credentials_rect, set_credentials_text),(set_excel_rect, set_excel_text)]
+setup_frame_btns = [(back_to_main_rect, back_to_main_text), (set_printer_rect, set_printer_text),(set_credentials_rect, set_credentials_text),(set_excel_rect, set_excel_text), (confirm_rect, confirm_text)]
 
 # Run Frame Buttons #
 
@@ -244,9 +358,15 @@ stop_script_rect, stop_script_text = create_button(WWIDTH//2 - BUTTON_WIDTH//2, 
 
 run_frame_btns = [(back_to_main_rect, back_to_main_text), (run_script_rect, run_script_text), (stop_script_rect, stop_script_text)]
 
+# Printer Frame Buttons #
+
+confirm_rect_print, confirm_text_print = create_button(WWIDTH//2 - BUTTON_WIDTH//2, 20, 'Confirm', on_confirm_printer)
+
+printer_frame_btns = [(back_to_main_rect, back_to_main_text), (confirm_rect_print, confirm_text_print)]
+
 # All Frame Buttons #
 
-all_frame_btns = [main_frame_btns, run_frame_btns, mail_frame_btns, setup_frame_btns]
+all_frame_btns = [main_frame_btns, run_frame_btns, mail_frame_btns, setup_frame_btns, printer_frame_btns]
 
 # Hide / Show Buttons #
 
@@ -293,6 +413,8 @@ def bind_hover_effects():
         frame_buttons = mail_frame_btns
     elif current_frame == FRAME_RUN:
         frame_buttons = run_frame_btns
+    elif current_frame == FRAME_PRINTER:
+        frame_buttons = printer_frame_btns
 
     try:
         for rect, text_id in frame_buttons:

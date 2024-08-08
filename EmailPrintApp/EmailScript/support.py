@@ -4,8 +4,11 @@ import os
 error_count = 0
 
 credentials_json = 'Summer-2024/EmailPrintApp/Setup/credentials.json'
+#'EmailPrintApp/Setup/credentials.json' Mac
 attachments_dir = 'Summer-2024/EmailPrintApp/EmailScript/attachments'
+#'EmailPrintApp/EmailScript/attachments' Mac
 emails_json = 'Summer-2024/EmailPrintApp/EmailScript/emails.json'
+#'EmailPrintApp/EmailScript/emails.json' Mac
 
 with open(credentials_json, 'r') as f:
     data = json.load(f)

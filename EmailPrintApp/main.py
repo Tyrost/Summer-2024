@@ -12,7 +12,8 @@ def main():
     switch_frame(FRAME_MAIN)
     
     show_button_on_canvas(main_frame_btns)
-
+    
+    WINDOW.update()
     WINDOW.mainloop()
 
 if __name__ == '__main__':
@@ -34,4 +35,8 @@ Set Up Interface:
     - Set up excel sheet path []
 Set Up Mail:
     - Set emails.json to display all emails in Mails []
+
+Convert Script into executable file []
+Have User download all program Dependencies []
+
 '''

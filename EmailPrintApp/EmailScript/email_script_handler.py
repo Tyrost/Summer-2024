@@ -3,6 +3,14 @@ import imaplib
 import email
 import os
 import time
+import pdfkit
+
+def convert_html_to_pdf(html_content, pdf_file_path):
+    try:
+        pdfkit.from_string(html_content, pdf_file_path)
+        print(f"PDF generated and saved at {pdf_file_path}")
+    except Exception as e:
+        print(f"PDF generation failed: {e}")
 
 def decode_part(part):
     try:
@@ -23,8 +31,10 @@ def get_message_body_and_attachments(message):
 
             if "attachment" in content_disposition:
                 filename = part.get_filename()
+                
                 if filename:
                     attachments.append((filename, part.get_payload(decode=True)))
+
             elif (content_type == "text/plain") and ("attachment" not in content_disposition):
                 body += decode_part(part)
     else:
@@ -34,7 +44,7 @@ def get_message_body_and_attachments(message):
 if not os.path.isdir(attachments_dir):
     os.makedirs(attachments_dir)
 
-def read_email_script(running, stop_event):
+def read_email_script(running, stop_event, callback=None):
     '''
     Searches for UNSEEN emails only
     '''
@@ -83,13 +93,22 @@ def read_email_script(running, stop_event):
 
             mail.close()
             mail.logout()
-
+            
+        except ValueError:
+            print('Email setup not yet set...')
+            if callback:
+                callback(None)
+            return
+        
         except Exception as e:
-            print(f'An error occurred:\n{e}')
+            print(f'An error occurred\nPerhaps it has to do with credentaials.\nPlease navigate to MainMenu > SetUp > Set Email and read the instructions carefully.\n\nError:\n{e}\n\nRetrying in 30 seconds...\n')
             error_count += 1
             if error_count == 3:
+                print('Ended...\n')
+                if callback:
+                    callback(None)
                 return
-            time.sleep(60)
-            print('Running...')
+            time.sleep(30)
+            print('Running...\n')
     
-    print('Connection Ended')
+    print('Connection Ended\n')

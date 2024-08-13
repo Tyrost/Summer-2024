@@ -1,20 +1,21 @@
 import tkinter as tk
 from tkinter import font
 import logging as log
-import json
 from components.TimerApp import TimerApp
 from typing import List, Tuple
 from EmailScript.email_script_handler import read_email_script
-from Setup.setup_system_handler import credential_obj, save_credentials
+from Setup.setup_system_handler import create_editor, save_credentials
 import threading
 from Setup.SystemicFunctions.setup_printer_system import *
+from Setup.SystemicFunctions.setup_excel_orders import *
+from win32 import win32print
 
 log.basicConfig(level=log.INFO)
 
 #_________________________________________________________________ Globals _________________________________________________________________ #
 
-default_printer = None
-excel_set = False # Will be used to store string path. Will evaluate as True
+default_printer = win32print.GetDefaultPrinter()
+excel_set = False
 
 current_email = None
 current_password = None
@@ -26,7 +27,11 @@ WINDOW = tk.Tk()
 WHEIGHT = 600
 WWIDTH = 800
 
-FONT = font.Font(family='Summer-2024/EmailPrintApp/components/Font/Lexend-VariableFont_wght.ttf', size=18)
+try:
+    FONT = font.Font(family=os.path.join(__file__,'Font', 'Lexend-VariableFont_wght.tff'), size=18)
+except Exception as e:
+    log.warn('Failed to load Lexend Font.')
+    FONT = font.Font(family='Helvetica', size=18)
 
 container = tk.Frame(WINDOW)
 container.pack(fill='both', expand=True)
@@ -36,8 +41,9 @@ FRAME_RUN = tk.Frame(container)
 FRAME_SETUP = tk.Frame(container)
 FRAME_MAIL = tk.Frame(container)
 FRAME_PRINTER = tk.Frame(container)
+FRAME_EXCEL = tk.Frame(container)
 
-frames = [FRAME_MAIN, FRAME_RUN, FRAME_SETUP, FRAME_MAIL, FRAME_PRINTER]
+frames = [FRAME_MAIN, FRAME_RUN, FRAME_SETUP, FRAME_MAIL, FRAME_PRINTER, FRAME_EXCEL]
 
 for frame in frames:
     frame.grid(row=0, column=0, sticky='nsew')
@@ -59,10 +65,9 @@ def switch_frame(frame:tk.Frame):
     current_frame = frame
     hide_all(all_frame_btns)
     frame.tkraise()
-    log.info(f'Switched onto {current_frame} frame')
+    log.info(f'Switched frame')
     bind_hover_effects()
 
-    # Make All Existant Widgets Unseeable
     if current_frame != FRAME_SETUP:
         email_editor.text_editor.place_forget()
         pw_editor.text_editor.place_forget()
@@ -70,8 +75,10 @@ def switch_frame(frame:tk.Frame):
     
     if current_frame != FRAME_PRINTER:
         default_printer_editor.text_editor.place_forget()
-        
-
+        printer_list.place_forget()
+    
+    if current_frame != FRAME_EXCEL:
+        set_excel_editor.text_editor.place_forget()
 
 # Button Division Canvas #
 
@@ -120,26 +127,29 @@ def update_status(new_status):
 
 timer_label = TimerApp(FRAME_RUN)
 
-# Email Set Up Instructions Label #
-
-password_setup_txt = 'IMPORTANT:\nEMAIL SETUP INSTRUCTIONS.\nPassword IS NOT the same password used for you email.\nProceed with the following link:\nhttps://myaccount.google.com/u/3/apppasswords?\nWithin the text box labeled "App name", please input "Python Automation Script".\nPlease use the given auto-generated code as a password to input onto this program.'
-instructions_email_setup = tk.Label(WINDOW, text=password_setup_txt, width=65, height=8)
-
 # Set Email Widgets #
 
-email_editor, pw_editor = credential_obj(WINDOW, ['Email', 'Password'], 33, 1, FONT)
+password_setup_txt = 'IMPORTANT:\nEMAIL SETUP INSTRUCTIONS.\nPassword IS NOT the same password used for your email.\nProceed with the following link:\nhttps://myaccount.google.com/u/3/apppasswords?\nWithin the text box labeled "App name", please input "Python Automation Script".\nPlease use the given auto-generated code as a password to input onto this program.'
+instructions_email_setup = tk.Label(WINDOW, text=password_setup_txt, width=65, height=8)
 
-if current_frame != FRAME_SETUP:
-    email_editor.text_editor.pack_forget()
-    pw_editor.text_editor.pack_forget()
+email_editor = create_editor(WINDOW, 'Email', 33, 1, FONT)
+pw_editor = create_editor(WINDOW, 'Password', 33, 1, FONT)
 
 # Set Printer Widgets #
 
-default_printer_editor, none = credential_obj(WINDOW, ['Default Printer', 'none'], 33, 1, FONT)
-none.text_editor.destroy()
+def order_str_list(l):
+    result = 'Available Printers:\n\n'
+    for element in l:
+        result += element + '\n'
+    return result
 
-if current_frame != FRAME_PRINTER:
-    default_printer_editor.text_editor.pack_forget()
+printer_list = tk.Label(WINDOW, text=order_str_list(list_printers()), width=45, height=15)
+
+default_printer_editor = create_editor(WINDOW, 'Default Printer', 33, 1, FONT)
+
+# Set Excel Widgets #
+
+set_excel_editor = create_editor(WINDOW, 'Excel File Name', 33, 1, FONT)
 
 #_________________________________________________________________ Handlers _________________________________________________________________# 
 
@@ -176,6 +186,13 @@ def handle_set_printer_menu():
 
     handle_set_printer()
 
+def handle_set_excel_menu():
+    log.info('Excel Setup Button Clicked! Switch')
+    switch_frame(FRAME_EXCEL)
+    show_button_on_canvas(excel_frame_btns)
+
+    handle_set_excel_path()
+
 #__________________________ Set Up Frame Handlers __________________________#
 
 # Run Frame - Handlers #
@@ -183,22 +200,58 @@ def handle_set_printer_menu():
 stop_event = threading.Event()
 
 def start_email_thread():
-    global email_thread
+    global email_thread, running, status
+
     email_thread = threading.Thread(target=read_email_script, args=(running, stop_event))
     email_thread.start()
 
+    check_email_thread()
+
 def stop_email_thread():
     global stop_event
+
     if email_thread.is_alive():
         stop_event.set()
         email_thread.join()
+
+def check_email_thread():
+    global running, status
+
+    if running and not email_thread.is_alive():
+        running = False
+        status = 'Not Running'
+        update_status(status)
+        log.info(f'Thread has stopped. Status: {status}')
+
+    WINDOW.after(1000, check_email_thread)
 
 def handle_run_script():
     global running
     global status
 
+    invalid = False
+
+    if len(os.listdir('Summer-2024/EmailPrintApp/Setup/ExcelSheet')) == 0:
+        log.info('Excel File Does not exist. Program may not continue')
+
+        excel_not_exist_label = tk.Label(WINDOW, text='Excel File Does not exist. Program may not continue.', width=45, height=2)
+        excel_not_exist_label.place(x=200, y=80)
+        WINDOW.after(3000, excel_not_exist_label.destroy)
+        invalid = True
+    
+    if not default_printer:
+        log.info('Default Printer Not Set. Program may not continue.')
+
+        printer_not_set_label = tk.Label(WINDOW, text='Default Printer Not Set. Program may not continue.', width=45, height=2)
+        printer_not_set_label.place(x=200, y=130)
+        WINDOW.after(3000, printer_not_set_label.destroy)
+        invalid = True
+    
+    if invalid:
+        return
+
     if running:
-        print('Script is already running.')
+        log.info('Script is already running.')
         return
 
     timer_label.reset_timer()
@@ -220,9 +273,9 @@ def handle_stop_script():
     global status
 
     if not running:
-        print(f'Status {status}, please run the script first')
+        log.info(f'Status {status}, please run the script first')
         return
-    
+
     running = False
     status = 'Not Running'
 
@@ -247,10 +300,11 @@ def on_confirm_printer():
 
     if setup_printer_system(default_printer):
         text = f"Successfully set '{default_printer}' as the default printer."
-    elif not setup_printer_system(default_printer):
-        text = f"The printer '{default_printer}' is already set as the default printer."
     elif setup_printer_system(default_printer) is None:
         text = f'Printer name {default_printer} not available in Windows printer devices'
+    elif setup_printer_system(default_printer) == False:
+        text = f"The printer '{default_printer}' is already set as the default printer."
+
 
     info_label = tk.Label(WINDOW, text=text, width=50, height=2)
     info_label.place(x=140, y=150)
@@ -258,17 +312,8 @@ def on_confirm_printer():
 
 def handle_set_printer():
 
-    def order_str_list(l):
-        result = 'Available Printers:\n\n'
-        for element in l:
-            result += element + '\n'
-        return result
-    
-    printer_list = tk.Label(WINDOW, text=order_str_list(list_printers()), width=45, height=15)
-    
-    if current_frame == FRAME_SETUP:
-        default_printer_editor.text_editor.place(x=180, y=100)
-        printer_list.place(x=280, y=160)
+    default_printer_editor.text_editor.place(x=180, y=100)
+    printer_list.place(x=280, y=160)
 
 # Set Credentials - Handler #
 
@@ -277,32 +322,60 @@ def handle_set_credentials():
     show_button_on_canvas([(confirm_rect, confirm_text)])
     instructions_email_setup.place(x=205, y=450)
     
-    if current_frame == FRAME_SETUP:
-        email_editor.text_editor.place(x=180, y=100)
-        pw_editor.text_editor.place(x=180, y=150)
-        instructions_email_setup.place(x=205, y=450)
+    email_editor.text_editor.place(x=180, y=100)
+    pw_editor.text_editor.place(x=180, y=150)
+    instructions_email_setup.place(x=205, y=450)
 
-def on_confirm_click_setup(credentials_path=os.path.join(__file__,"..",'Setup','credentials.json')):
+def on_confirm_click_setup(credentials_path='Summer-2024/EmailPrintApp/Setup/credentials.json'):
     global email_editor, pw_editor, current_email, current_password
     
     current_email = email_editor.get_text()
     current_password = pw_editor.get_text()
-    
-    confirmed_cred = None
-    
+
     if '@gmail.com' not in current_email:
         confirmed_cred = tk.Label(WINDOW, text=f'Invalid Email. Must be Google Email ending in @gmail.com', width=50, height=2)
     else:    
         confirmed_cred = tk.Label(WINDOW, text=f'Credentials Confirmed. Email: {current_email}, Password: {current_password}', width=50, height=2)
         save_credentials(email_editor, pw_editor, credentials_path)
-    
+
     confirmed_cred.place(x=200, y=200)
 
     WINDOW.after(5000, confirmed_cred.destroy)
         
 def handle_set_excel_path():
-    pass
-  
+    
+    set_excel_editor.text_editor.place(x=180, y=100)
+
+def on_confirm_click_excel():
+    global excel_set
+
+    excel_file_name = set_excel_editor.get_text()
+    invalid = False
+
+    if len(excel_file_name) <= 3:
+        log.warn('Invalid Excel File name')
+        text=f'Invalid File Name: {excel_file_name}. Name must be longer than 3 characters.'
+        invalid = True
+    elif len(excel_file_name) >= 20:
+        log.warn('Invalid Excel File name')
+        text=f'Invalid File Name: {excel_file_name}. Length of name must be less than 20 characters'
+        invalid = True
+    else:
+        if not mod_excel_file(excel_file_name):
+            text=f'File Already named: {excel_file_name}.xlsx'
+        else:
+            log.info('Valid Excel File name')
+            text=f'Excel File: {excel_file_name} Set'
+
+    confirm_excel = tk.Label(WINDOW, text=text)
+    confirm_excel.place(x=200, y=200)
+    WINDOW.after(5000, confirm_excel.destroy)
+
+    if invalid:
+        return
+    
+    excel_set = os.listdir(excel_dir)[0]
+
 # See Mail Handlers #
 pass
 
@@ -347,7 +420,7 @@ confirm_rect, confirm_text = create_button(WWIDTH//2 - BUTTON_WIDTH//2, 20, 'Con
 
 set_printer_rect, set_printer_text = create_button(WWIDTH//2 - BUTTON_WIDTH//2, 200, 'Set Printer', command=handle_set_printer_menu)
 set_credentials_rect, set_credentials_text = create_button(WWIDTH//2 - BUTTON_WIDTH//2, 200 + BUTTON_HEIGHT + SEPARATION, 'Set Email', command=handle_set_credentials)
-set_excel_rect, set_excel_text = create_button(WWIDTH//2 - BUTTON_WIDTH//2, 200 + 2 * (BUTTON_HEIGHT + SEPARATION), 'Set Excel', command=handle_set_excel_path)
+set_excel_rect, set_excel_text = create_button(WWIDTH//2 - BUTTON_WIDTH//2, 200 + 2 * (BUTTON_HEIGHT + SEPARATION), 'Set Excel', command=handle_set_excel_menu)
 
 setup_frame_btns = [(back_to_main_rect, back_to_main_text), (set_printer_rect, set_printer_text),(set_credentials_rect, set_credentials_text),(set_excel_rect, set_excel_text), (confirm_rect, confirm_text)]
 
@@ -364,9 +437,15 @@ confirm_rect_print, confirm_text_print = create_button(WWIDTH//2 - BUTTON_WIDTH/
 
 printer_frame_btns = [(back_to_main_rect, back_to_main_text), (confirm_rect_print, confirm_text_print)]
 
+# Excel Frame Buttons #
+
+confirm_excel_rect, confirm_excel_text = create_button(WWIDTH//2 - BUTTON_WIDTH//2, 20, 'Confirm', on_confirm_click_excel)
+
+excel_frame_btns = [(back_to_main_rect, back_to_main_text), (confirm_excel_rect, confirm_excel_text)]
+
 # All Frame Buttons #
 
-all_frame_btns = [main_frame_btns, run_frame_btns, mail_frame_btns, setup_frame_btns, printer_frame_btns]
+all_frame_btns = [main_frame_btns, run_frame_btns, mail_frame_btns, setup_frame_btns, printer_frame_btns, excel_frame_btns]
 
 # Hide / Show Buttons #
 
@@ -415,6 +494,8 @@ def bind_hover_effects():
         frame_buttons = run_frame_btns
     elif current_frame == FRAME_PRINTER:
         frame_buttons = printer_frame_btns
+    elif current_frame == FRAME_EXCEL:
+        frame_buttons = excel_frame_btns
 
     try:
         for rect, text_id in frame_buttons:

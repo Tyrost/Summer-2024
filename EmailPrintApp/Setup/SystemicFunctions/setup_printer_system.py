@@ -31,13 +31,14 @@ def setup_printer_system(selected_printer:list)->str:
     printers = list_printers()
 
     if selected_printer not in printers:
-        raise None#ValueError('Printer name not available in Windows printer devices')
+        log.warn('Printer name not available in Windows printer devices')
+        return None
     
     current_default_printer = win32print.GetDefaultPrinter()
 
     if current_default_printer == selected_printer:
-        return False#log.info(f"The printer '{selected_printer}' is already set as the default printer.")
-        
+        log.warn(f"The printer '{selected_printer}' is already set as the default printer.\nDefault: {win32print.GetDefaultPrinter()}.")
+        return False 
     
     log.info(f'New Printer: {selected_printer} set!')
     win32print.SetDefaultPrinter(selected_printer)

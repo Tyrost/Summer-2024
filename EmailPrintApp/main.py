@@ -27,14 +27,15 @@ Initialize Main Interface:
     - Status Dynamic Tracker [Done]
 Run Main Script:
     - Connect the main script to work Accuratley [Done]
-    - Connecting to excel sheet []
-    - Printing attachments to set printers []
+    - Connecting to excel sheet [Done]
+    - Printing attachments to set printers [] L
+    - Read Email and Input Data to Excel if set [Done]
 Set Up Interface:
-    - Set up printer []
-    - Set email and google-generated password []
-    - Set up excel sheet path []
+    - Set up printer [Done]
+    - Set email and google-generated password [Done]
+    - Set up excel sheet path [Done]
 Set Up Mail:
-    - Set emails.json to display all emails in Mails []
+    - Set emails.json to display all emails in Mails [Cancelled]
 
 Convert Script into executable file []
 Have User download all program Dependencies []

@@ -1,9 +1,12 @@
 from EmailScript.support import *
+from Setup.SystemicFunctions.setup_excel_orders import *
 import imaplib
 import email
 import os
 import time
 import pdfkit
+
+data_gathered = None
 
 def convert_html_to_pdf(html_content, pdf_file_path):
     try:
@@ -70,35 +73,45 @@ def read_email_script(running, stop_event, callback=None):
                 if status != 'OK':
                     print(f"Failed to fetch message with ID {message_id}")
                     continue
+                
+                ### ESSENTIAL IMPLEMENTATION HERE ###
 
                 actual_message = email.message_from_bytes(message_data[0][1])
 
                 email_date = actual_message["Date"]
                 subject = actual_message["Subject"]
-                message_body, attachments = get_message_body_and_attachments(actual_message)
-                
-                create_json(emails_json, message_id, email_date, subject, message_body)
 
-                for filename, content in attachments:
-                    filepath = os.path.join(attachments_dir, filename)
-                    with open(filepath, 'wb') as f:
-                        f.write(content)
-                    print(f"Attachment saved: {filepath}")
+                if '[Print on Demand]' in subject:
+                    message_body, attachments = get_message_body_and_attachments(actual_message)
+                    create_json(emails_json, message_id, email_date, subject, message_body)
 
-                print("=" * 50)
+                    for filename, content in attachments:
+                        filepath = os.path.join(attachments_dir, filename)
+                        with open(filepath, 'wb') as f:
+                            f.write(content)
+                        print(f"Attachment saved: {filepath}")
+                        ### PRINTER FUNCTION SHOULD BE HERE ###
+                    else:
+                        data = find_data(message_body)
+                        print(data)
+                        print(len(data))
+                        input_excel_data(data)
 
-                status, _ = mail.store(message_id, '+FLAGS', '\\Seen')
-                if status != 'OK':
-                    print(f"Failed to mark message with ID {message_id} as seen")
+                    print("=" * 50)
+
+                    status, _ = mail.store(message_id, '+FLAGS', '\\Seen')
+                    if status != 'OK':
+                        print(f"Failed to mark message with ID {message_id} as seen")
 
             mail.close()
             mail.logout()
-            
-        except ValueError:
-            print('Email setup not yet set...')
-            if callback:
-                callback(None)
-            return
+
+        # except ValueError as e:
+        #     print(e)
+        #     print('Email setup not yet set...')
+        #     if callback:
+        #         callback(None)
+        #     return
         
         except Exception as e:
             print(f'An error occurred\nPerhaps it has to do with credentaials.\nPlease navigate to MainMenu > SetUp > Set Email and read the instructions carefully.\n\nError:\n{e}\n\nRetrying in 30 seconds...\n')

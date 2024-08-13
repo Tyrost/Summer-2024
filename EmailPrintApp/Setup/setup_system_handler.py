@@ -12,12 +12,11 @@ from Setup.SystemicFunctions import *
 
 # Credentials #
 
-def credential_obj(window, text:list, width, height, font):
+def create_editor(window, text, width, height, font)->PlaceholderTextEditor:
         
-    email_editor = PlaceholderTextEditor(window, text[0], width, height, font)
-    pw_editor = PlaceholderTextEditor(window, text[1], width, height, font)
+    editor = PlaceholderTextEditor(window, text, width, height, font)
 
-    return email_editor, pw_editor
+    return editor
     
 def save_credentials(email_editor:PlaceholderTextEditor, pw_editor:PlaceholderTextEditor, credentials_path:str):
     

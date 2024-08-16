@@ -1,35 +1,55 @@
+
+from typing import Union
+import logging as log
 import json
 import os
 import re
 import time
-from pprint import pprint
+
+#_______________________________________________________ Support Module (Main Script) _______________________________________________________#
 
 error_count = 0
 
-credentials_json = 'Summer-2024/EmailPrintApp/Setup/credentials.json'
-#'EmailPrintApp/Setup/credentials.json' Mac
-attachments_dir = 'Summer-2024/EmailPrintApp/EmailScript/attachments'
-#'EmailPrintApp/EmailScript/attachments' Mac
-emails_json = 'Summer-2024/EmailPrintApp/EmailScript/emails.json'
-#'EmailPrintApp/EmailScript/emails.json' Mac
+credentials_json = os.path.abspath(os.path.join(os.getcwd(), 'Setup/credentials.json')) # Absolute Path to User Credential Storage
 
-with open(credentials_json, 'r') as f:
+attachments_dir = os.path.abspath(os.path.join(os.getcwd(), 'EmailScript/attachments')) # Absolute Path to Program's Attachment Directory
+
+emails_json = os.path.abspath(os.path.join(os.getcwd(), 'EmailScript/emails.json')) # Absolute Path to Program's Email DB Directory
+
+with open(credentials_json, 'r') as f: # Open Credentials
     data = json.load(f)
 
-email_adress = data['email']
+# Store Credentials
+
+email_address = data['email']
 password = data['password']
 
-def load_json(path):
-    if os.path.exists(path):
+def load_json(path:str) -> Union[dict, list]:
+    '''
+    Loads JSON data from a given path.
+    '''
+    if os.path.exists(path): # Checks that JSON file is existent
+
         with open(path, 'r') as f:
             data = json.load(f)
             return data
     else:
-        return []
+        return [] # Generates an empty array to initialize storage, if empty.
     
-def create_json(path, id, date, subject, body):
+def create_json(path:str, id:bytes, date:str, subject:str, body:str) -> None:
+    '''
+    This function loads an existing JSON file, appends the details of a new email\n
+    to it, and then saves the updated data back to the file. The email details include\n
+    the email ID, date, subject, and body.\n
 
-    data = load_json(path)
+    Args:
+        path (str): The file path to the JSON file where email details are stored.
+        id (bytes): The identifier of the email, which is decoded to a string.
+        date (str): The date the email was received.
+        subject (str): The subject line of the email.
+        body (str): The body content of the email.
+    '''
+    data = load_json(path) # Load existent data
     e_mail = {
         'id': id.decode(),
         'date': date,
@@ -40,10 +60,19 @@ def create_json(path, id, date, subject, body):
 
     with open(path, 'w') as f:
         json.dump(data, f, indent=2)
-    print('Added email to JSON')
+    log.info('Added email to JSON')
 
 #Thanks ChatGPT :)
-def find_data(body: str):
+
+def find_data(body: str) -> dict:
+    '''
+    This function parses the body of an email to extract specific details such as the date,\n
+    order number, customer name, billing address, contact information, quantity, shipping\n
+    method, price, and payment method. The extracted data is organized into a dictionary\n 
+    and returned.
+    '''
+    # Define regex patterns for each piece of information
+
     patterns = {
         'Date': r'Date:\s*(.+?)\n',
         'Order Number': r'Order #(\d+)',
@@ -55,6 +84,8 @@ def find_data(body: str):
         'Payment Method': r'Payment method:\s*(.+?)\n'
     }
     
+    # Extract information using regex patterns
+
     extracted_info = {}
     
     for key, pattern in patterns.items():
@@ -65,11 +96,13 @@ def find_data(body: str):
             else:
                 extracted_info[key] = match.group(1).strip()
 
+    # Extract contact information separately
     contact_info_pattern = r'(<\+(\d{10})>)\s*(.+?)\n'
     contact_info_match = re.search(contact_info_pattern, body)
     if contact_info_match:
         extracted_info['Contact Info'] = contact_info_match.group(3).strip()
 
+    # Apply extracted information into the resultant dictionary
     ordered_info = {
         'Date': extracted_info.get('Date'),
         'Order Number': extracted_info.get('Order Number'),

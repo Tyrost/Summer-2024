@@ -1,6 +1,23 @@
 import tkinter as tk
 
-class PlaceholderTextEditor:
+#_________________________________________________________ Text Editor Widget _________________________________________________________ #
+
+class TextEditor:
+    '''
+    A custom Text Editor class with placeholder text functionality and event handling.
+
+    This class creates a text editor widget using Tkinter that includes a placeholder\n
+    text feature. The placeholder text appears in the editor until the user focuses\n
+    on the widget, at which point the placeholder is removed. If the user unfocuses\n
+    the widget without entering any text, the placeholder reappears.
+
+    Attributes:
+        window (tk.Tk or tk.Frame): The parent window or frame where the text editor is placed.
+        placeholder_text (str): The placeholder text that appears when the editor is empty.
+        font (tuple): The font style and size for the text editor.
+        current_text (str): The current text content of the editor, excluding the placeholder.
+        text_editor (tk.Text): The Tkinter Text widget used as the text editor.
+    '''
     def __init__(self, window, placeholder_text, width, height, font):
 
         self.window = window
@@ -66,10 +83,9 @@ class PlaceholderTextEditor:
     
     def stop_editing(self):
         self.text_editor.config(state='disabled')
-        self.window.focus_set()  # Remove focus from the text editor
+        self.window.focus_set()
         
         def enable_editing():
             self.text_editor.config(state='normal')
         
-        # Re-enable editing after a short delay
         self.window.after(100, enable_editing)

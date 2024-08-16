@@ -1,6 +1,14 @@
-from components.assets import *
+from components.index import *
+
+#________________________________________________________________ Main ________________________________________________________________#
 
 def main():
+    '''
+    The main entry point for the application.
+
+    This function sets up the main window of the application, configures the UI,
+    and starts the main event loop.
+    '''
     global running
     global status
 
@@ -18,26 +26,4 @@ def main():
 
 if __name__ == '__main__':
 
-    main()  
-
-'''
-Initialize Main Interface:
-    - Back Universal Buttons [Done]
-    - Set Up, See mail, Run Buttons [Done]
-    - Status Dynamic Tracker [Done]
-Run Main Script:
-    - Connect the main script to work Accuratley [Done]
-    - Connecting to excel sheet [Done]
-    - Printing attachments to set printers [] L
-    - Read Email and Input Data to Excel if set [Done]
-Set Up Interface:
-    - Set up printer [Done]
-    - Set email and google-generated password [Done]
-    - Set up excel sheet path [Done]
-Set Up Mail:
-    - Set emails.json to display all emails in Mails [Cancelled]
-
-Convert Script into executable file []
-Have User download all program Dependencies []
-
-'''
+    main()
